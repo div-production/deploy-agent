@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Vladimir
+ * Date: 16.11.17
+ */
+
+use div\DeployAgent\Application;
+use div\DeployAgent\InitCommand;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$app = new Application();
+
+$app->run();
