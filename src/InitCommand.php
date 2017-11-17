@@ -65,9 +65,9 @@ class InitCommand extends Command
                 break;
         }
 
-        $webDeploy = $this->askWebDeploy($helper);
+        $result['webDeploy'] = $this->askWebDeploy($helper);
 
-        if ($webDeploy) {
+        if ($result['webDeploy']) {
             $result['webRoot'] = $this->askWebRoot($helper);
             $result['deployKey'] = $this->askDeployKey($helper);
 
@@ -78,11 +78,17 @@ class InitCommand extends Command
             }
         }
 
+        $this->gitignore($helper, $result);
+
         $this->generateConfig($result);
     }
 
     protected function initialCheck(QuestionHelper $helper)
     {
+        if (!is_dir($this->getGitDirectory())) {
+            throw new \Exception('Отсутствует директория .git');
+        }
+
         if (file_exists($this->getConfigPath())) {
             $q = new ConfirmationQuestion('Файл конфигурации уже существует, заменить[y/N]? ', false);
 
@@ -161,7 +167,7 @@ class InitCommand extends Command
                 throw new \Exception('Такой директории не существует');
             }
 
-            return $val;
+            return preg_replace('/(\/|\\\)$/', '', $val);
         });
 
         return $helper->ask($this->input, $this->output, $q);
@@ -221,5 +227,75 @@ class InitCommand extends Command
     protected function getCommandsFromPreset($preset)
     {
         return [];
+    }
+
+    protected function gitignore(QuestionHelper $helper, $config)
+    {
+        $q = new ConfirmationQuestion('Добавить сгенерированные файлы в gitignore[Y/n]?');
+
+        if (!$helper->ask($this->input, $this->output, $q)) {
+            return;
+        }
+
+        echo 1;
+
+        $infoDir = $this->getGitDirectory() . DIRECTORY_SEPARATOR . 'info';
+        if (!$infoDir) {
+            mkdir($infoDir);
+        }
+
+        $excludeFile = $infoDir . DIRECTORY_SEPARATOR . 'exclude';
+        if (!file_exists($excludeFile)) {
+            file_put_contents($excludeFile, '');
+        }
+
+        $excludeLines = explode(PHP_EOL, file_get_contents($excludeFile));
+
+        $configFile = DIRECTORY_SEPARATOR . basename($this->getConfigPath());
+
+        if ($config['webDeploy'] == true) {
+            if ($config['webRoot']) {
+                $webDeployFile = DIRECTORY_SEPARATOR . $config['webRoot'] . DIRECTORY_SEPARATOR . $this->getWebDeployFile();
+            } else {
+                $webDeployFile = DIRECTORY_SEPARATOR . $this->getWebDeployFile();
+            }
+        } else {
+            $webDeployFile = null;
+        }
+
+        $configFileExists = false;
+        $webDeployFileExists = false;
+
+        foreach ($excludeLines as $line) {
+            if (strpos($line, $configFile) === 0) {
+                $configFileExists = true;
+            }
+            if ($webDeployFile && strpos($line, $webDeployFile) === 0) {
+                $webDeployFileExists = true;
+            }
+        }
+
+        if (!$configFileExists) {
+            $excludeLines[] = $configFile;
+        }
+        if (!$webDeployFileExists) {
+            $excludeLines[] = $webDeployFile;
+        }
+
+        if (!$configFileExists || !$webDeployFileExists) {
+            $excludeLines[] = '';
+            $data = implode(PHP_EOL, $excludeLines);
+            file_put_contents($excludeFile, $data);
+        }
+    }
+
+    protected function getGitDirectory()
+    {
+        return getcwd() . DIRECTORY_SEPARATOR . '/.git';
+    }
+
+    protected function getWebDeployFile()
+    {
+        return 'deploy.php';
     }
 }
