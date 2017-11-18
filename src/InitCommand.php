@@ -32,11 +32,10 @@ class InitCommand extends Command
      */
     protected $output;
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $this->input = $input;
-        $this->output = $output;
-    }
+    /**
+     * @var GitHelper
+     */
+    protected $git;
 
     protected function configure()
     {
@@ -44,8 +43,16 @@ class InitCommand extends Command
         $this->setDescription('Инициализация файла конфигурации');
     }
 
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $this->input = $input;
+        $this->output = $output;
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->git = new GitHelper();
+
         $helper = $this->getHelper('question');
 
         $this->initialCheck($helper);
@@ -102,10 +109,6 @@ class InitCommand extends Command
 
     protected function initialCheck(QuestionHelper $helper)
     {
-        if (!is_dir($this->getGitDirectory())) {
-            throw new \Exception('Отсутствует директория .git');
-        }
-
         if (file_exists($this->getConfigPath())) {
             $q = new ConfirmationQuestion('Файл конфигурации уже существует, заменить[y/N]? ', false);
 
@@ -120,9 +123,8 @@ class InitCommand extends Command
         $q = new Question('Укажите удалённый репозиторий [origin]: ', 'origin');
 
         $q->setValidator(function ($val) {
-            $git = new GitHelper();
 
-            if (!$git->getRemoteUrl($val)) {
+            if (!$this->git->getRemoteUrl($val)) {
                 throw new \Exception('Удалённый репозиторий не найден');
             }
 
@@ -281,7 +283,7 @@ class InitCommand extends Command
             return;
         }
 
-        $infoDir = $this->getGitDirectory() . DIRECTORY_SEPARATOR . 'info';
+        $infoDir = $this->git->getDirectory() . DIRECTORY_SEPARATOR . 'info';
         if (!$infoDir) {
             mkdir($infoDir);
         }
@@ -333,11 +335,6 @@ class InitCommand extends Command
         $this->output->writeLn('<info>Файлы успешно добавлены в gitignore</info>');
     }
 
-    protected function getGitDirectory()
-    {
-        return getcwd() . DIRECTORY_SEPARATOR . '/.git';
-    }
-
     protected function getWebDeployFile()
     {
         return 'deploy.php';
@@ -345,10 +342,8 @@ class InitCommand extends Command
 
     protected function createWebHooks($apiKey, $host, $deployKey)
     {
-        $git = new GitHelper();
-
-        $owner = $git->getOwnerName();
-        $repo = $git->getRepositoryName();
+        $owner = $this->git->getOwnerName();
+        $repo = $this->git->getRepositoryName();
 
         $ch = curl_init("https://api.bitbucket.org/2.0/repositories/$owner/$repo/hooks");
 
@@ -357,7 +352,7 @@ class InitCommand extends Command
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_USERPWD, $git->getOwnerName() . ':' . $apiKey);
+        curl_setopt($ch, CURLOPT_USERPWD, $this->git->getOwnerName() . ':' . $apiKey);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
         ]);

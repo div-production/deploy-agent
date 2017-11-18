@@ -11,7 +11,7 @@ class GitHelper
 {
     protected $root;
 
-    protected $git;
+    protected $gitBinary;
 
     public function __construct($root = null, $git = 'git')
     {
@@ -19,7 +19,11 @@ class GitHelper
             $this->root = getcwd();
         }
 
-        $this->git = $git;
+        if (!is_dir($this->getDirectory())) {
+            throw new \Exception('Отсутствует директория .git');
+        }
+
+        $this->gitBinary = $git;
     }
 
     public function getRepositoryName($remote = 'origin')
@@ -46,6 +50,11 @@ class GitHelper
 
     public function exec($command)
     {
-        return trim(shell_exec("cd $this->root && $this->git $command"));
+        return trim(shell_exec("cd $this->root && $this->gitBinary $command"));
+    }
+
+    public function getDirectory()
+    {
+        return $this->root . DIRECTORY_SEPARATOR . '.git';
     }
 }
