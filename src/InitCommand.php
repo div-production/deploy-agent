@@ -86,10 +86,18 @@ class InitCommand extends Command
                 break;
         }
 
+        $result['clearOpCache'] = $this->askClearOpCache($helper);
+
+        if ($result['clearOpCache']) {
+            $result['webRoot'] = $this->askWebRoot($helper);
+        }
+
         $result['webDeploy'] = $this->askWebDeploy($helper);
 
         if ($result['webDeploy']) {
-            $result['webRoot'] = $this->askWebRoot($helper);
+            if (!isset($result['webRoot'])) {
+                $result['webRoot'] = $this->askWebRoot($helper);
+            }
             $result['deployKey'] = $this->askDeployKey($helper);
 
             $this->createWebDeployFile($result['webRoot']);
@@ -181,6 +189,13 @@ class InitCommand extends Command
     protected function askCommand(QuestionHelper $helper)
     {
         $q = new Question('Укажите комманду: ');
+
+        return $helper->ask($this->input, $this->output, $q);
+    }
+
+    protected function askClearOpCache(QuestionHelper $helper)
+    {
+        $q = new ConfirmationQuestion('Включить сброс opcache при деплое[Y/n]?: ');
 
         return $helper->ask($this->input, $this->output, $q);
     }
