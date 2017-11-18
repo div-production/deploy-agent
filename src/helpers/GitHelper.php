@@ -57,4 +57,9 @@ class GitHelper
     {
         return $this->root . DIRECTORY_SEPARATOR . '.git';
     }
+
+    public function getHead()
+    {
+        return $this->exec('rev-parse HEAD');
+    }
 }

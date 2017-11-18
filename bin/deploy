@@ -8,11 +8,13 @@
 
 use div\DeployAgent\Application;
 use div\DeployAgent\InitCommand;
+use div\DeployAgent\StartCommand;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $app = new Application();
 
 $app->add(new InitCommand());
+$app->add(new StartCommand());
 
 $app->run();
