@@ -216,16 +216,16 @@ class InitCommand extends Command
             }
 
             if (strpos($val, DIRECTORY_SEPARATOR) === 0) {
-                $dir = $val;
-            } else {
-                $dir = getcwd() . DIRECTORY_SEPARATOR . $val;
+                throw new \Exception('Нельзя указывать абсолютный путь');
             }
+
+            $dir = getcwd() . DIRECTORY_SEPARATOR . $val;
 
             if (!is_dir($dir)) {
                 throw new \Exception('Такой директории не существует');
             }
 
-            return preg_replace('/(\/|\\\)$/', '', $val);
+            return trim($val, '/');
         });
 
         return $helper->ask($this->input, $this->output, $q);
