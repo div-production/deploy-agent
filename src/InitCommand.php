@@ -22,6 +22,14 @@ class InitCommand extends Command
     const PRESET = 'p';
     const COMMANDS_SET = 'c';
 
+    protected $presets = [
+        'yii2' => [
+            'composer install --no-dev',
+            'php yii migrate --interactive=0',
+            'php yii cache/flush-all',
+        ],
+    ];
+
     /**
      * @var InputInterface
      */
@@ -159,6 +167,12 @@ class InitCommand extends Command
             if (!$val) {
                 throw new \Exception('Укажите название пресета');
             }
+
+            if (!isset($this->presets[$val])) {
+                throw new \Exception('Такого пресета не существует');
+            }
+
+            return $val;
         });
 
         return $helper->ask($this->input, $this->output, $q);
@@ -272,7 +286,11 @@ class InitCommand extends Command
 
     protected function getCommandsFromPreset($preset)
     {
-        return [];
+        if (!isset($this->presets[$preset])) {
+            return [];
+        } else {
+            return $this->presets[$preset];
+        }
     }
 
     protected function gitignore(QuestionHelper $helper, $config)
