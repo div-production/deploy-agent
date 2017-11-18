@@ -77,6 +77,9 @@ class InitCommand extends Command
             $result['webRoot'] = $this->askWebRoot($helper);
             $result['deployKey'] = $this->askDeployKey($helper);
 
+            $this->createWebDeployFile($result['webRoot']);
+            $this->output->writeln('<info>Файл для веб деплоя успешно создан</info>');
+
             $webHooks = $this->askWebHooks($helper);
 
             if ($webHooks) {
@@ -380,5 +383,18 @@ class InitCommand extends Command
         }
 
         curl_close($ch);
+    }
+
+    protected function createWebDeployFile($webRoot)
+    {
+        $file = $this->getWebDeployFile();
+
+        $content = "<?php\n";
+
+        $path = getcwd() . DIRECTORY_SEPARATOR . $webRoot . $file;
+
+        if (file_put_contents($path, $content) === false) {
+            throw new \Exception('Не удалрсь создать файл для веб деплоя');
+        }
     }
 }
