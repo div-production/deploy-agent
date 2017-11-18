@@ -8,11 +8,9 @@
 namespace div\DeployAgent;
 
 
+use div\DeployAgent\helpers\GitHelper;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Input\Input;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
@@ -24,8 +22,14 @@ class InitCommand extends Command
     const PRESET = 'p';
     const COMMANDS_SET = 'c';
 
+    /**
+     * @var InputInterface
+     */
     protected $input;
 
+    /**
+     * @var OutputInterface
+     */
     protected $output;
 
     protected function initialize(InputInterface $input, OutputInterface $output)
@@ -50,6 +54,8 @@ class InitCommand extends Command
 
         $result['remote'] = $this->askRemote($helper);
         $result['branch'] = $this->askBranch($helper);
+        $result['host'] = $this->askHost($helper);
+
         $commandsOrPreset = $this->askCommandsOrPreset($helper);
 
         switch ($commandsOrPreset) {
@@ -74,13 +80,21 @@ class InitCommand extends Command
             $webHooks = $this->askWebHooks($helper);
 
             if ($webHooks) {
-                $result['apiKey'] = $this->askApiKey($helper);
+                $apiKey = $this->askApiKey($helper);
+                try {
+                    $this->createWebHooks($apiKey, $result['host'], $result['deployKey']);
+                    $output->writeln('<info>Веб хук успешно создан</info>');
+                } catch (\Exception $e) {
+                    $output->writeln('<error>' . $e->getMessage() . '</error>');
+                }
             }
         }
 
-        $this->gitignore($helper, $result);
-
         $this->generateConfig($result);
+
+        $this->output->writeln('<info>Файл конфигурации успешно сгенерирован</info>');
+
+        $this->gitignore($helper, $result);
     }
 
     protected function initialCheck(QuestionHelper $helper)
@@ -101,6 +115,16 @@ class InitCommand extends Command
     protected function askRemote(QuestionHelper $helper)
     {
         $q = new Question('Укажите удалённый репозиторий [origin]: ', 'origin');
+
+        $q->setValidator(function ($val) {
+            $git = new GitHelper();
+
+            if (!$git->getRemoteUrl($val)) {
+                throw new \Exception('Удалённый репозиторий не найден');
+            }
+
+            return $val;
+        });
 
         return $helper->ask($this->input, $this->output, $q);
     }
@@ -212,11 +236,28 @@ class InitCommand extends Command
         return $helper->ask($this->input, $this->output, $q);
     }
 
+    protected function askHost(QuestionHelper $helper)
+    {
+        $q = new Question('Укажите хост: ');
+
+        $q->setValidator(function ($val) {
+            if (!$val) {
+                throw new \Exception('Укажите хост');
+            }
+
+            return $val;
+        });
+
+        return $helper->ask($this->input, $this->output, $q);
+    }
+
     protected function generateConfig(array $data)
     {
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
-        file_put_contents($this->getConfigPath(), $json);
+        if (file_put_contents($this->getConfigPath(), $json) === false) {
+            throw new \Exception('Не удалось сохранить файл конфигурации');
+        }
     }
 
     protected function getConfigPath()
@@ -231,13 +272,11 @@ class InitCommand extends Command
 
     protected function gitignore(QuestionHelper $helper, $config)
     {
-        $q = new ConfirmationQuestion('Добавить сгенерированные файлы в gitignore[Y/n]?');
+        $q = new ConfirmationQuestion('Добавить сгенерированные файлы в gitignore[Y/n]? ');
 
         if (!$helper->ask($this->input, $this->output, $q)) {
             return;
         }
-
-        echo 1;
 
         $infoDir = $this->getGitDirectory() . DIRECTORY_SEPARATOR . 'info';
         if (!$infoDir) {
@@ -287,6 +326,8 @@ class InitCommand extends Command
             $data = implode(PHP_EOL, $excludeLines);
             file_put_contents($excludeFile, $data);
         }
+
+        $this->output->writeLn('<info>Файлы успешно добавлены в gitignore</info>');
     }
 
     protected function getGitDirectory()
@@ -297,5 +338,47 @@ class InitCommand extends Command
     protected function getWebDeployFile()
     {
         return 'deploy.php';
+    }
+
+    protected function createWebHooks($apiKey, $host, $deployKey)
+    {
+        $git = new GitHelper();
+
+        $owner = $git->getOwnerName();
+        $repo = $git->getRepositoryName();
+
+        $ch = curl_init("https://api.bitbucket.org/2.0/repositories/$owner/$repo/hooks");
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_USERPWD, $git->getOwnerName() . ':' . $apiKey);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+        ]);
+
+        $deployFile = $this->getWebDeployFile();
+
+        $data = [
+            'description' => 'Deploy',
+            'url' => "http://$host/$deployFile?key=$deployKey",
+            'active' => true,
+            'events' => [
+                'repo:push',
+            ],
+        ];
+
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        curl_exec($ch);
+
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($code != 201) {
+            throw new \Exception('При создании веб хука произошла ошибка, код ' . $code);
+        }
+
+        curl_close($ch);
     }
 }
