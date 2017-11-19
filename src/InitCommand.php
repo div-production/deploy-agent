@@ -419,7 +419,7 @@ class InitCommand extends Command
 
         $content = $this->getWebDeployFileContent();
 
-        $path = getcwd() . DIRECTORY_SEPARATOR . $webRoot . $file;
+        $path = getcwd() . DIRECTORY_SEPARATOR . $webRoot . DIRECTORY_SEPARATOR . $file;
 
         if (file_put_contents($path, $content) === false) {
             throw new \Exception('Не удалрсь создать файл для веб деплоя');
