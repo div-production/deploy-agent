@@ -33,6 +33,11 @@ class StartCommand extends Command
         /** @var Application $app */
         $app = $this->getApplication();
 
+        if (!getenv('HOME')) {
+            $home = $app->getUserHome();
+            putenv("HOME=$home");
+        }
+
         $config = $app->readConfig();
 
         $git = new GitHelper();

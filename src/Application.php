@@ -31,6 +31,30 @@ class Application extends ConsoleApplication
         return $config;
     }
 
+    public function getUserHome()
+    {
+        $home = getenv('HOME');
+        if ($home) {
+            return $home;
+        }
+
+        $line = shell_exec('ls -l | grep deploy.json');
+        $cols = explode(' ', $line);
+        $cols = array_diff($cols, ['']);
+        $cols = array_values($cols);
+
+        $owner = $cols[2];
+
+        $home = shell_exec("echo ~$owner");
+
+        if (strpos($home, '~') === 0) {
+            echo 'error';
+            throw new \Exception('Не удалось определить домашнюю директорию пользователя');
+        } else {
+            return trim($home);
+        }
+    }
+
     public function getPid($remote, $branch)
     {
         $pidFile = $this->getPidFile($remote, $branch);
@@ -94,7 +118,9 @@ class Application extends ConsoleApplication
 
         $ds = DIRECTORY_SEPARATOR;
 
-        $home = getenv('HOME');
+        $home = $this->getUserHome();
+
+        shell_exec("echo $home > test.log");
 
         return "{$home}{$ds}.deploy{$ds}projects{$ds}{$owner}__{$name}__{$branch}";
     }
