@@ -13,18 +13,6 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 
 class Application extends ConsoleApplication
 {
-    /**
-     * @var GitHelper
-     */
-    protected $git;
-
-    public function __construct()
-    {
-        $this->git = new GitHelper();
-
-        parent::__construct();
-    }
-
     public function readConfig()
     {
         $file = getcwd() . DIRECTORY_SEPARATOR . 'deploy.json';
@@ -45,8 +33,6 @@ class Application extends ConsoleApplication
 
     public function getPid($remote, $branch)
     {
-        $storage = $this->getProjectStorage($remote, $branch);
-
         $pidFile = $this->getPidFile($remote, $branch);
 
         if (!file_exists($pidFile)) {
@@ -101,8 +87,10 @@ class Application extends ConsoleApplication
 
     protected function getProjectStorage($remote, $branch)
     {
-        $owner = $this->git->getOwnerName($remote);
-        $name = $this->git->getRepositoryName($remote);
+        $git = new GitHelper();
+
+        $owner = $git->getOwnerName($remote);
+        $name = $git->getRepositoryName($remote);
 
         $ds = DIRECTORY_SEPARATOR;
 
