@@ -46,7 +46,7 @@ class StartWebDeployCommand extends Command
             throw new \Exception('Передан невалидный ключ деплоя');
         }
 
-        $executable = $app->getExecutablePath();
+        $executable = $app->getExecutable();
 
         $process = new BackgroundProcess("$executable start");
 

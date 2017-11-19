@@ -431,7 +431,7 @@ class InitCommand extends Command
         /** @var Application $app */
         $app = $this->getApplication();
 
-        $executable = $app->getExecutablePath();
+        $executable = $app->getExecutable();
 
         $content = <<<'EOT'
 <?php

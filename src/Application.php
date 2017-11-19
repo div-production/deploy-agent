@@ -74,14 +74,14 @@ class Application extends ConsoleApplication
         }
     }
 
-    public function getExecutablePath()
+    public function getExecutable()
     {
         $self = $_SERVER['PHP_SELF'];
 
         if (strpos($self, DIRECTORY_SEPARATOR) === 0) {
-            return $self;
+            return PHP_BINARY . ' ' . $self;
         } else {
-            return getcwd() . DIRECTORY_SEPARATOR . $self;
+            return PHP_BINARY . ' ' . getcwd() . DIRECTORY_SEPARATOR . $self;
         }
     }
 
