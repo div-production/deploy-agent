@@ -417,12 +417,40 @@ class InitCommand extends Command
     {
         $file = $this->getWebDeployFile();
 
-        $content = "<?php\n";
+        $content = $this->getWebDeployFileContent();
 
         $path = getcwd() . DIRECTORY_SEPARATOR . $webRoot . $file;
 
         if (file_put_contents($path, $content) === false) {
             throw new \Exception('Не удалрсь создать файл для веб деплоя');
         }
+    }
+
+    protected function getWebDeployFileContent()
+    {
+        /** @var Application $app */
+        $app = $this->getApplication();
+
+        $executable = $app->getExecutablePath();
+
+        $content = <<<'EOT'
+<?php
+if (empty($_GET['key'])) {
+    echo 'Не передан ключ деплоя';
+    exit;
+}
+
+$key = $_GET['key'];
+
+if (preg_match('/[^\da-zA-Z]/', $key) || strlen($key) > 128) {
+    echo 'Передан некорректный ключ деплоя';
+    exit;
+}
+
+shell_exec("{executable} start-web-deploy $key > /dev/null &");
+
+EOT;
+
+        return str_replace('{executable}', $executable, $content);
     }
 }

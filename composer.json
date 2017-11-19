@@ -1,7 +1,8 @@
 {
     "name": "Deploy agent",
     "require": {
-        "symfony/console": "^3.3"
+        "symfony/console": "^3.3",
+        "cocur/background-process": "^0.7.0"
     },
     "autoload": {
         "psr-4": {

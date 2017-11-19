@@ -8,6 +8,7 @@
 namespace div\DeployAgent;
 
 
+use Cocur\BackgroundProcess\BackgroundProcess;
 use div\DeployAgent\helpers\GitHelper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,6 +16,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class StartCommand extends Command
 {
+    protected $pid;
+
+    protected $remote;
+
+    protected $branch;
+
     protected function configure()
     {
         $this->setName('start');
@@ -23,7 +30,10 @@ class StartCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $config = $this->readConfig();
+        /** @var Application $app */
+        $app = $this->getApplication();
+
+        $config = $app->readConfig();
 
         $git = new GitHelper();
 
@@ -31,9 +41,23 @@ class StartCommand extends Command
             throw new \Exception('В конфигурации не указан удалённый репозиторий');
         }
 
+        $this->remote = $config['remote'];
+
         if (empty($config['branch'])) {
             throw new \Exception('В конфигурации не указана ветка');
         }
+
+        $this->branch = $config['branch'];
+
+        if ($app->getPid($config['remote'], $config['branch'])) {
+            throw new \Exception('Уже запущен другой процесс деплоя');
+        }
+
+        $this->checkIsRunning($config);
+
+        $this->pid = getmypid();
+        $app->savePid($this->pid, $config['remote'], $config['branch']);
+        $this->registerShutdown();
 
         if (empty($config['host'])) {
             throw new \Exception('В конфигурации не указан хост');
@@ -67,31 +91,11 @@ class StartCommand extends Command
         $output->writeln('<info>Деплой успешно завершён</info>');
     }
 
-    protected function readConfig()
-    {
-        $file = getcwd() . DIRECTORY_SEPARATOR . 'deploy.json';
-
-        if (!file_exists($file)) {
-            throw new \Exception('Не найден файл конфигурации');
-        }
-
-        $json = file_get_contents($file);
-        $config = @json_decode($json, true);
-
-        if ($config === null) {
-            throw new \Exception('Файл deploy.json имеет некорректный формат');
-        }
-
-        return $config;
-    }
-
     protected function execCommands(array $commands)
     {
         foreach ($commands as $command) {
             shell_exec($command);
         }
-
-
     }
 
     protected function clearOpCache($webRoot, $host)
@@ -126,5 +130,30 @@ EOT;
         if ($result != 'success') {
             throw new \Exception('Не удалось очистить opcache');
         }
+    }
+
+    protected function checkIsRunning($config)
+    {
+        /** @var Application $app */
+        $app = $this->getApplication();
+
+        $existingPid = $app->getPid($config['remote'], $config['branch']);
+
+        /** @var BackgroundProcess $existingProcess */
+        $existingProcess = BackgroundProcess::createFromPID($existingPid);
+
+        if ($existingProcess->isRunning()) {
+            throw new \Exception('Уже запущен другой процесс деплоя в фоновом режиме');
+        }
+    }
+
+    protected function registerShutdown()
+    {
+        register_shutdown_function(function () {
+            /** @var Application $app */
+            $app = $this->getApplication();
+
+            $app->removePid($this->pid, $this->remote, $this->branch);
+        });
     }
 }
