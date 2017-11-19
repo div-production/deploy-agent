@@ -10,15 +10,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
 define('ROOT', realpath(__DIR__ . '/..'));
 
-$opt = getopt('v::');
-$version = 'dev-master';
-if (array_key_exists('v', $opt)) {
-    $version = $opt['v'];
-    if (!preg_match('/^\d+\.\d+\.\d+(-[\d\w\.]+)?$/i', $version)) {
-        die("Version number must follow semantic versioning.\n");
-    }
-}
-
 chdir(ROOT);
 
 $pharName = "deploy.phar";
@@ -50,7 +41,6 @@ foreach ($finder as $fileInfo) {
 // Add bin/deploy file
 $depContent = file_get_contents(ROOT . '/bin/deploy');
 $depContent = str_replace("#!/usr/bin/env php\n", '', $depContent);
-$depContent = str_replace("'master'", "'$version'", $depContent);
 
 $phar->addFromString('bin/deploy', $depContent);
 
