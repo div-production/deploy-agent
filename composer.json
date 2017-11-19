@@ -8,5 +8,8 @@
         "psr-4": {
             "div\\DeployAgent\\": "src"
         }
+    },
+    "require-dev": {
+        "symfony/finder": "^3.3"
     }
 }
