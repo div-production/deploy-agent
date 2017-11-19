@@ -21,4 +21,6 @@ $app->add(new InitCommand());
 $app->add(new StartCommand());
 $app->add(new StartWebDeployCommand());
 
+$app->setDefaultCommand('start');
+
 $app->run();
