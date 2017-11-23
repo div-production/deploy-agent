@@ -46,10 +46,10 @@ class SelfUpdateCommand extends Command
 
         $executable = $app->getExecutable();
 
-        $ver = shell_exec("$executable -V");
+        $ver = trim(shell_exec("$executable -V"));
 
-        $output->writeln('<info>Утилита успешно обновлена</info>');
         $output->writeln($ver);
+        $output->writeln('<info>Утилита успешно обновлена</info>');
     }
 
     protected function getUpdateUrl()
