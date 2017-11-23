@@ -15,7 +15,7 @@ use div\DeployAgent\StartWebDeployCommand;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$version = '1.0.1';
+$version = '1.1.0';
 
 $app = new Application('Инструмент для развётрывания php приложений', $version);
 
