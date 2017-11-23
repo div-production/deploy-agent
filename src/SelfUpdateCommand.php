@@ -22,6 +22,10 @@ class SelfUpdateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        if (!\Phar::running()) {
+            throw new \Exception('Обновить можно только phar версию утилиты');
+        }
+
         /** @var Application $app */
         $app = $this->getApplication();
 
