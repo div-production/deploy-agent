@@ -88,8 +88,8 @@ class StartCommand extends Command
 
         if (!empty($config['clearOpCache'])) {
             try {
-                $this->clearOpCache($config['webRoot'], $config['host']);
-                $output->writeln('<info>Opcache успешно очищен</info>');
+                $opcacheCommand = $app->find('clear-opcache');
+                $opcacheCommand->execute($input, $output);
             } catch (\Exception $e) {
                 $output->writeln('<error>' . $e->getMessage() . '</error>');
             }
@@ -102,40 +102,6 @@ class StartCommand extends Command
     {
         foreach ($commands as $command) {
             shell_exec($command);
-        }
-    }
-
-    protected function clearOpCache($webRoot, $host)
-    {
-        $fileName = md5(time() . rand(0, 99999) . '28hd2c99chsdc') . '.php';
-
-        $path = getcwd() . DIRECTORY_SEPARATOR . $webRoot . DIRECTORY_SEPARATOR . $fileName;
-
-        $content = <<<'EOT'
-<?php
-if (function_exists('opcache_reset')) {
-    opcache_reset();
-    echo 'success';
-}
-
-EOT;
-        file_put_contents($path, $content);
-
-        $ch = curl_init("http://$host/$fileName");
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-
-        $result = curl_exec($ch);
-
-        curl_close($ch);
-
-        unlink($path);
-
-        if ($result != 'success') {
-            throw new \Exception('Не удалось очистить opcache');
         }
     }
 

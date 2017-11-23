@@ -7,6 +7,7 @@
  */
 
 use div\DeployAgent\Application;
+use div\DeployAgent\ClearOpCacheCommand;
 use div\DeployAgent\InitCommand;
 use div\DeployAgent\StartCommand;
 use div\DeployAgent\StartWebDeployCommand;
@@ -20,6 +21,7 @@ $app = new Application('Инструмент для развётрывания p
 $app->add(new InitCommand());
 $app->add(new StartCommand());
 $app->add(new StartWebDeployCommand());
+$app->add(new ClearOpCacheCommand());
 
 $app->setDefaultCommand('start');
 
