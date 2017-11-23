@@ -9,6 +9,7 @@
 use div\DeployAgent\Application;
 use div\DeployAgent\ClearOpCacheCommand;
 use div\DeployAgent\InitCommand;
+use div\DeployAgent\SelfUpdateCommand;
 use div\DeployAgent\StartCommand;
 use div\DeployAgent\StartWebDeployCommand;
 
@@ -22,6 +23,7 @@ $app->add(new InitCommand());
 $app->add(new StartCommand());
 $app->add(new StartWebDeployCommand());
 $app->add(new ClearOpCacheCommand());
+$app->add(new SelfUpdateCommand());
 
 $app->setDefaultCommand('start');
 

@@ -98,15 +98,15 @@ class Application extends ConsoleApplication
         }
     }
 
-    public function getExecutable()
+    public function getExecutable($includePhp = true)
     {
         $self = $_SERVER['PHP_SELF'];
 
-        if (strpos($self, DIRECTORY_SEPARATOR) === 0) {
-            return PHP_BINARY . ' ' . $self;
-        } else {
-            return PHP_BINARY . ' ' . getcwd() . DIRECTORY_SEPARATOR . $self;
+        if (strpos($self, DIRECTORY_SEPARATOR) !== 0) {
+            $self = getcwd() . DIRECTORY_SEPARATOR . $self;
         }
+
+        return $includePhp ? PHP_BINARY . ' ' . $self : $self;
     }
 
     protected function getProjectStorage($remote, $branch)
