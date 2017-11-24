@@ -8,7 +8,6 @@
 namespace div\DeployAgent;
 
 
-use Cocur\BackgroundProcess\BackgroundProcess;
 use div\DeployAgent\helpers\GitHelper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,10 +17,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 class StartCommand extends Command
 {
     protected $pid;
-
-    protected $remote;
-
-    protected $branch;
 
     protected function configure()
     {
@@ -48,22 +43,14 @@ class StartCommand extends Command
             throw new \Exception('В конфигурации не указан удалённый репозиторий');
         }
 
-        $this->remote = $config['remote'];
-
         if (empty($config['branch'])) {
             throw new \Exception('В конфигурации не указана ветка');
         }
 
-        $this->branch = $config['branch'];
-
-        if ($app->getPid($config['remote'], $config['branch'])) {
-            throw new \Exception('Уже запущен другой процесс деплоя');
-        }
-
-        $this->checkIsRunning($config);
+        $this->checkIsRunning();
 
         $this->pid = getmypid();
-        $app->savePid($this->pid, $config['remote'], $config['branch']);
+        $app->savePid($this->pid);
         $this->registerShutdown();
 
         if (empty($config['host'])) {
@@ -105,17 +92,12 @@ class StartCommand extends Command
         }
     }
 
-    protected function checkIsRunning($config)
+    protected function checkIsRunning()
     {
         /** @var Application $app */
         $app = $this->getApplication();
 
-        $existingPid = $app->getPid($config['remote'], $config['branch']);
-
-        /** @var BackgroundProcess $existingProcess */
-        $existingProcess = BackgroundProcess::createFromPID($existingPid);
-
-        if ($existingProcess->isRunning()) {
+        if ($app->getPid()) {
             throw new \Exception('Уже запущен другой процесс деплоя в фоновом режиме');
         }
     }
@@ -126,7 +108,7 @@ class StartCommand extends Command
             /** @var Application $app */
             $app = $this->getApplication();
 
-            $app->removePid($this->pid, $this->remote, $this->branch);
+            $app->removePid($this->pid);
         });
     }
 }

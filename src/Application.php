@@ -13,8 +13,14 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 
 class Application extends ConsoleApplication
 {
+    protected $config;
+
     public function readConfig()
     {
+        if ($this->config) {
+            return $this->config;
+        }
+
         $file = getcwd() . DIRECTORY_SEPARATOR . 'deploy.json';
 
         if (!file_exists($file)) {
@@ -27,6 +33,8 @@ class Application extends ConsoleApplication
         if ($config === null) {
             throw new \Exception('Файл deploy.json имеет некорректный формат');
         }
+
+        $this->config = $config;
 
         return $config;
     }
@@ -55,9 +63,9 @@ class Application extends ConsoleApplication
         }
     }
 
-    public function getPid($remote, $branch)
+    public function getPid()
     {
-        $pidFile = $this->getPidFile($remote, $branch);
+        $pidFile = $this->getPidFile();
 
         if (!file_exists($pidFile)) {
             return null;
@@ -75,22 +83,22 @@ class Application extends ConsoleApplication
         }
     }
 
-    public function savePid($pid, $remote, $branch)
+    public function savePid($pid)
     {
-        $storage = $this->getProjectStorage($remote, $branch);
+        $storage = $this->getProjectStorage();
 
         if (!is_dir($storage)) {
             mkdir($storage, 0755, true);
         }
 
-        $pidFile = $this->getPidFile($remote, $branch);
+        $pidFile = $this->getPidFile();
 
         file_put_contents($pidFile, $pid);
     }
 
-    public function removePid($pid, $remote, $branch)
+    public function removePid($pid)
     {
-        $pidFile = $this->getPidFile($remote, $branch);
+        $pidFile = $this->getPidFile();
         $existingPid = file_get_contents($pidFile);
 
         if ($existingPid == $pid) {
@@ -109,12 +117,21 @@ class Application extends ConsoleApplication
         return $includePhp ? PHP_BINARY . ' ' . $self : $self;
     }
 
-    protected function getProjectStorage($remote, $branch)
+    public function getProjectStorage()
     {
+        $config = $this->readConfig();
+
+        if (empty($config['remote'])) {
+            throw new \Exception('В файле конфигурации отсутствует параметр remote');
+        }
+        if (empty($config['branch'])) {
+            throw new \Exception('В файле конфигурации отсутствует параметр branch');
+        }
+
         $git = new GitHelper();
 
-        $owner = $git->getOwnerName($remote);
-        $name = $git->getRepositoryName($remote);
+        $owner = $git->getOwnerName($config['remote']);
+        $name = $git->getRepositoryName($config['remote']);
 
         $ds = DIRECTORY_SEPARATOR;
 
@@ -122,11 +139,11 @@ class Application extends ConsoleApplication
 
         shell_exec("echo $home > test.log");
 
-        return "{$home}{$ds}.deploy{$ds}projects{$ds}{$owner}__{$name}__{$branch}";
+        return "{$home}{$ds}.deploy{$ds}projects{$ds}{$owner}__{$name}__{$config['branch']}";
     }
 
-    protected function getPidFile($remote, $branch)
+    protected function getPidFile()
     {
-        return $this->getProjectStorage($remote, $branch) . DIRECTORY_SEPARATOR . 'deploy.pid';
+        return $this->getProjectStorage() . DIRECTORY_SEPARATOR . 'deploy.pid';
     }
 }
