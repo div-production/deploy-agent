@@ -70,6 +70,7 @@ class InitCommand extends Command
         $result['remote'] = $this->askRemote($helper);
         $result['branch'] = $this->askBranch($helper);
         $result['host'] = $this->askHost($helper);
+        $result['commands'] = [];
 
         $commandsOrPreset = $this->askCommandsOrPreset($helper);
 
@@ -291,9 +292,9 @@ class InitCommand extends Command
 
     protected function generateConfig(array $data)
     {
-        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        if (file_put_contents($this->getConfigPath(), $json) === false) {
+        if (file_put_contents($this->getConfigPath(), $json . PHP_EOL) === false) {
             throw new \Exception('Не удалось сохранить файл конфигурации');
         }
     }
