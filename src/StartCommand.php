@@ -59,8 +59,17 @@ class StartCommand extends Command
 
         $oldHead = $git->getHead();
 
-        $git->exec("fetch $config[remote] $config[branch]");
-        $git->exec("checkout FETCH_HEAD");
+        file_put_contents($this->getOutputFile(), '');
+
+        $code = $this->execCommand($git->getCommand("fetch $config[remote] $config[branch]"));
+        if ($code != 0) {
+            throw new \Exception('Не удалось получить данные из удалённого репозитория');
+        }
+
+        $code = $this->execCommand($git->getCommand("checkout FETCH_HEAD"));
+        if ($code != 0) {
+            throw new \Exception('Не удалось применить новые изменения, возможно в проекте есть незакоммиченые правки');
+        }
 
         $newHead = $git->getHead();
 
@@ -88,7 +97,10 @@ class StartCommand extends Command
     protected function execCommands(array $commands)
     {
         foreach ($commands as $command) {
-            shell_exec($command);
+            $code = $this->execCommand($command);
+            if ($code != 0) {
+                throw new \Exception("Команда $command не выполнена. Код $code");
+            }
         }
     }
 
@@ -110,5 +122,23 @@ class StartCommand extends Command
 
             $app->removePid($this->pid);
         });
+    }
+
+    protected function getOutputFile()
+    {
+        /** @var Application $app */
+        $app = $this->getApplication();
+
+        return $app->getProjectStorage() . DIRECTORY_SEPARATOR . 'output';
+    }
+
+    protected function execCommand($command)
+    {
+        $outputFile = $this->getOutputFile();
+
+        $delimiter = PHP_EOL . '$ ' . $command . PHP_EOL;
+        file_put_contents($outputFile, $delimiter, FILE_APPEND);
+
+        return (int)trim(shell_exec("$command >>$outputFile 2>&1; echo $?"));
     }
 }

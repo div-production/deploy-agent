@@ -13,7 +13,9 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 
 class Application extends ConsoleApplication
 {
-    protected $config;
+    private $config;
+
+    private $projectStorage;
 
     public function readConfig()
     {
@@ -119,6 +121,10 @@ class Application extends ConsoleApplication
 
     public function getProjectStorage()
     {
+        if ($this->projectStorage) {
+            return $this->projectStorage;
+        }
+
         $config = $this->readConfig();
 
         if (empty($config['remote'])) {
@@ -137,9 +143,9 @@ class Application extends ConsoleApplication
 
         $home = $this->getUserHome();
 
-        shell_exec("echo $home > test.log");
+        $this->projectStorage = "{$home}{$ds}.deploy{$ds}projects{$ds}{$owner}__{$name}__{$config['branch']}";
 
-        return "{$home}{$ds}.deploy{$ds}projects{$ds}{$owner}__{$name}__{$config['branch']}";
+        return $this->projectStorage;
     }
 
     protected function getPidFile()

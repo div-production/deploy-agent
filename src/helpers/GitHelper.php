@@ -48,9 +48,14 @@ class GitHelper
         return $this->exec("config --get remote.$remote.url");
     }
 
+    public function getCommand($command)
+    {
+        return "cd $this->root && $this->gitBinary $command";
+    }
+
     public function exec($command)
     {
-        return trim(shell_exec("cd $this->root && $this->gitBinary $command"));
+        return trim(shell_exec($this->getCommand($command)));
     }
 
     public function getDirectory()
