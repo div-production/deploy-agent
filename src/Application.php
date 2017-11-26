@@ -148,6 +148,11 @@ class Application extends ConsoleApplication
         return $this->projectStorage;
     }
 
+    public function getDeployOutputFile()
+    {
+        return $this->getProjectStorage() . DIRECTORY_SEPARATOR . 'output';
+    }
+
     protected function getPidFile()
     {
         return $this->getProjectStorage() . DIRECTORY_SEPARATOR . 'deploy.pid';

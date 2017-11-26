@@ -59,7 +59,7 @@ class StartCommand extends Command
 
         $oldHead = $git->getHead();
 
-        file_put_contents($this->getOutputFile(), '');
+        file_put_contents($app->getDeployOutputFile(), '');
 
         $code = $this->execCommand($git->getCommand("fetch $config[remote] $config[branch]"));
         if ($code != 0) {
@@ -124,17 +124,12 @@ class StartCommand extends Command
         });
     }
 
-    protected function getOutputFile()
+    protected function execCommand($command)
     {
         /** @var Application $app */
         $app = $this->getApplication();
 
-        return $app->getProjectStorage() . DIRECTORY_SEPARATOR . 'output';
-    }
-
-    protected function execCommand($command)
-    {
-        $outputFile = $this->getOutputFile();
+        $outputFile = $app->getDeployOutputFile();
 
         $delimiter = PHP_EOL . '$ ' . $command . PHP_EOL;
         file_put_contents($outputFile, $delimiter, FILE_APPEND);
