@@ -279,6 +279,10 @@ class InitCommand extends Command
                 throw new \Exception('Укажите хост');
             }
 
+            if (!$this->pingHost($val)) {
+                throw new \Exception('Хост не отвечает');
+            }
+
             return $val;
         });
 
@@ -452,5 +456,12 @@ shell_exec("{executable} start-web-deploy $key > /dev/null &");
 EOT;
 
         return str_replace('{executable}', $executable, $content);
+    }
+
+    protected function pingHost($host, $port = 80)
+    {
+        $fp = @fsockopen($host, $port, $errno, $errstr, 5);
+
+        return $fp ? true : false;
     }
 }
