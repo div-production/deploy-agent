@@ -66,7 +66,7 @@ class StartCommand extends Command
             throw new \Exception('Не удалось получить данные из удалённого репозитория');
         }
 
-        $code = $this->execCommand($git->getCommand("checkout FETCH_HEAD"));
+        $code = $this->execCommand($git->getCommand("checkout -f FETCH_HEAD"));
         if ($code != 0) {
             throw new \Exception('Не удалось применить новые изменения, возможно в проекте есть незакоммиченые правки');
         }
