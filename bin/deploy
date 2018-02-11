@@ -27,6 +27,4 @@ $app->add(new ClearOpCacheCommand());
 $app->add(new SelfUpdateCommand());
 $app->add(new ShowLastOutputCommand());
 
-$app->setDefaultCommand('start');
-
 $app->run();
