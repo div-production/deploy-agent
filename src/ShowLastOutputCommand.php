@@ -17,7 +17,7 @@ class ShowLastOutputCommand extends Command
     protected function configure()
     {
         $this->setName('show-last-output');
-        $this->setDescription('Получение послендего вывода комманд деплоя');
+        $this->setDescription('Получение послендего вывода деплоя');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
