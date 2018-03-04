@@ -10,7 +10,7 @@ use div\DeployAgent\StartWebDeployCommand;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$__app__ = new Application('Инструмент для развётрывания php приложений', '1.2.2');
+$__app__ = new Application('Инструмент для развётрывания php приложений', '1.2.3');
 
 $__app__->add(new InitCommand());
 $__app__->add(new StartCommand());
