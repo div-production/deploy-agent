@@ -38,6 +38,8 @@ foreach ($finder as $fileInfo) {
     $phar->addFile($fileInfo->getRealPath(), $file);
 }
 
+$phar->addFile(ROOT. '/app.php', str_replace(ROOT, '', ROOT. '/app.php'));
+
 // Add bin/deploy file
 $depContent = file_get_contents(ROOT . '/bin/deploy');
 $depContent = str_replace("#!/usr/bin/env php\n", '', $depContent);

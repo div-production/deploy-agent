@@ -6,25 +6,6 @@
  * Date: 16.11.17
  */
 
-use div\DeployAgent\Application;
-use div\DeployAgent\ClearOpCacheCommand;
-use div\DeployAgent\InitCommand;
-use div\DeployAgent\SelfUpdateCommand;
-use div\DeployAgent\ShowLastOutputCommand;
-use div\DeployAgent\StartCommand;
-use div\DeployAgent\StartWebDeployCommand;
-
-require_once __DIR__ . '/../vendor/autoload.php';
-
-$version = '1.2.2';
-
-$app = new Application('Инструмент для развётрывания php приложений', $version);
-
-$app->add(new InitCommand());
-$app->add(new StartCommand());
-$app->add(new StartWebDeployCommand());
-$app->add(new ClearOpCacheCommand());
-$app->add(new SelfUpdateCommand());
-$app->add(new ShowLastOutputCommand());
+$app = require_once __DIR__ . '/../app.php';
 
 $app->run();
