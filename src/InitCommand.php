@@ -452,6 +452,8 @@ if (preg_match('/[^\da-zA-Z]/', $key) || strlen($key) > 128) {
     exit;
 }
 
+$key = escapeshellarg($key);
+
 shell_exec("{executable} start-web-deploy $key > /dev/null &");
 
 EOT;
